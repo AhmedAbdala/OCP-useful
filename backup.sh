@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ###############################################################################################################################
+#                                                                                                                             #
 # This script will launch backup for etcd on master nodes based on the official method supported by Red Hat                   #
 # https://docs.openshift.com/container-platform/4.10/backup_and_restore/control_plane_backup_and_restore/backing-up-etcd.html #
 #                                                                                                                             #
@@ -13,8 +14,14 @@
 # A debug pod will be used to run the backup script. and then a copy of the backup will be trasferred to the local machine    #
 # under the /tmp directory                                                                                                    #
 #                                                                                                                             #
+# The script logs in to the OCP cluster as kubeadmin, it assumes the kubeadmin-password file is saved under                   #
+# ~/ocp-deployment/auth/kubeadmin-password and it is hardwired in the code. You need to adapt the script to the right path    #
+# to make sure of the correct execution.                                                                                      #
+#                                                                                                                             #
 # Property of Red Hat, all rights reserved.                                                                                   #
+# https://github.com/AhmedAbdala/STC/blob/a71e676a9ad09f5b4c7b9eefe3f2a5e866d2b680/backup.sh                                  #
 # Maintainer: azaky@redhat.com                                                                                                #
+#                                                                                                                             #
 ###############################################################################################################################
 
 
@@ -33,11 +40,11 @@ export ocpServer=$(oc whoami --show-server)
 
 # Make sure you're logged in to the OCP cluster
 echo '** Trying to login to the cluster as admin! **' 
-echo -e "\n \n"
 eval oc login -u kubeadmin -p ${kubePass} ${ocpServer} > /dev/null
 if [[ $? -eq 0 ]]
 then
 	echo '====> Login to OCP Cluster successful'
+	echo -e "\n \n"
 else
 	echo '====> Could not login to the cluster, exiting now'
 	exit 300
@@ -57,7 +64,7 @@ then
 	echo -e "Failed Masters are: \n $failedMasters , Please contact support via access.redhat.com"
 	echo    "--------------------------------------------------------------------------------------"
 	
-	echo " script is exiting now ..."
+	echo    "script is exiting now ..."
 	exit 0
 fi
 
@@ -66,8 +73,7 @@ fi
 
 if [ $numberFailedMasters -eq 0 ]
 then
-	echo
-	echo  '** All Master Nodes are healthy backup can start now **'
+	echo  '====> All Master Nodes are healthy backup can start now'
 else
 	echo "----------------------------------------------------------------------"  
 	echo -e "Total Number Of Failed Masters: $numberFailedMasters, \n
@@ -80,7 +86,8 @@ else
 	echo
 fi
 
-echo -e "** selected master for etcd backup $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1) **"
+
+echo -e "====> selected master for etcd backup $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1)"
 echo
 
 echo -e "** check no debug Pod's running on $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1) **"
@@ -94,21 +101,19 @@ fi
 echo
 
 echo '** Starting a new debug pod **'
-echo
 # Start a clean new debug pod and keep it running in the background
  
 echo <<< $(oc debug node/$(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1) &>/dev/null) &
 
 # back-off to make sure the debug pod is running
-echo '** Getting a 10 seconds nap to make sure the debug pod is started **'
+echo '====>  Getting a 10 seconds nap to make sure the debug pod is started'
 sleep 10
-echo
 
 
 # Debug Pod Manipulation magic
 
 debugPod=$(oc get pods | grep debug | awk {'print $1'})
-echo -e "** debug pod $debugPod successfully started **"
+echo -e "====>  debug pod $debugPod successfully started"
 echo 
 
 echo '** cleaning all Previous backups on selected master node **'
@@ -141,7 +146,8 @@ fi
 
 echo '** Listing backup produced **'
 oc exec $debugPod -i -t -- ls -lth  /host/home/core/assets/backup | awk {'print $9'}
-echo
+#timeStamp=$(oc exec $debugPod -i -t -- ls -lth  /host/home/core/assets/backup | grep kube| awk {'print $9'} | cut -d '_' -f3,4)
+#echo -e "${timeStamp}"
 
 echo '** Moving the backup from the debugPod to local /tmp directory **'
 oc exec $debugPod -- tar cf - /host/home/core/assets/backup | tar xf - -C /tmp/
@@ -164,10 +170,11 @@ echo '====>  Debug Pod Removed'
 echo 
 
 echo '** tar the local /tmp/host directory **'
-rm -rf /tmp/host*.gz
-tar -cjf /tmp/host_$(date +%F)_$(date +%T).tar.gz /tmp/host
-tarball=$(ls -lth /tmp | grep host | awk {'print $9'})
-echo -e " ====>  tarball $tarball saved under local /tmp directory"
+cd /tmp
+rm -rf host*.gz
+tar -cjf host_$(date +%F-%H-%M-%s).tar.gz host
+tarball=$(ls -lth | grep host*.gz| awk {'print $9'})
+echo -e " ====> tarball $tarball saved under local /tmp directory"
 echo 
 
 echo '** Removing /tmp/host directory **'
