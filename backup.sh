@@ -6,6 +6,13 @@
 #                                                                                                                             #
 # The script is designed to work with OCP4.10                                                                                 #
 #                                                                                                                             #
+# The script will backup etcd by first checking the health of master nodes, if the number of healthy master nodes is 3 then   #
+# the script will pick the first match to use for etcd backup. if two master nodes are healthy then the operator must confirm #
+# that (s)he wishes to proceed.                                                                                               #
+# 	                                                                                                                          #
+# A debug pod will be used to run the backup script. and then a copy of the backup will be trasferred to the local machine    #
+# under the /tmp directory                                                                                                    #
+#                                                                                                                             #
 # Property of Red Hat, all rights reserved.                                                                                   #
 # Maintainer: azaky@redhat.com                                                                                                #
 ###############################################################################################################################
