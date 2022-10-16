@@ -10,7 +10,7 @@
 # The script will backup etcd by first checking the health of master nodes, if the number of healthy master nodes is 3 then   #
 # the script will pick the first match to use for etcd backup. if two master nodes are healthy then the operator must confirm #
 # that (s)he wishes to proceed.                                                                                               #
-# 	                                                                                                                      #
+#                                                                                                                             #
 # A debug pod will be used to run the backup script. and then a copy of the backup will be trasferred to the local machine    #
 # under the /tmp directory                                                                                                    #
 #                                                                                                                             #
@@ -19,8 +19,9 @@
 # to make sure of the correct execution.                                                                                      #
 #                                                                                                                             #
 # Property of Red Hat, all rights reserved.                                                                                   #
-# https://github.com/AhmedAbdala/STC/blob/a71e676a9ad09f5b4c7b9eefe3f2a5e866d2b680/backup.sh                                  #
-# Maintainer: azaky@redhat.com                                                                                                #
+# https://github.com/AhmedAbdala/OCP-useful/blob/main/backup.sh                                                               #
+# Maintainer: <azaky@redhat.com>                                                                                              #
+#             <amzaky@linux.com>                                                                                              #
 #                                                                                                                             #
 ###############################################################################################################################
 
@@ -31,79 +32,78 @@ echo "Welcome! to the OCP backup script!"
 echo "---------------------------------------------"
 echo -e "\n \n"
 
-# Checking if you need to login to the cluster or not
 
+# Make sure you're logged in to the OCP cluster
+# If not, ask for username and password
 oc whoami &> /dev/null
-
-if [[ $? -eq 0 ]]
-	then
-		echo 'you are already logged in to the cluster'
-	else
-  	echo “What is the username to login to the cluster? ” 
-  	read username 
-	  echo “please enter your password ” 
-	  read password 
-	  echo 'Trying to login to the cluster'
-	  echo '** Trying to login to the cluster as admin! **' 
-	  eval oc login -u ${username} -p ${password} ${ocpServer} > /dev/null
-	  if [[ $? -eq 0 ]]
-		 then
-	           echo '====> Login to OCP Cluster successful'
-		   echo -e "\n \n"
-		   ocpServer=$(oc whoami --show-server)
-		  else
-		    echo '====> Could not login to the cluster, exiting now'
-		    exit 300	
-	  fi
+if [[$? -eq 0]]
+then
+    echo "You're already logged in to the cluster"
+else
+    echo "enter your username to login to the cluster"
+    read username
+    echo "enter password to login to the cluster"
+    read password
+    echo '** Trying to login to the cluster as admin! **'
+    ocpServer=$(oc whoami --show-server)
+    eval oc login -u ${username} -p ${password} ${ocpServer} > /dev/null
+    if [[ $? -eq 0 ]]
+    then
+        echo '====> Login to OCP Cluster successful'
+        echo -e "\n \n"
+    else
+        echo '====> Could not login to the cluster, exiting now'
+        exit 300
+    fi
 fi
 
 # Check the health of the nodes
 echo '** Checking the health of the master nodes **'
 failedMasters= $(oc get nodes | grep master | grep -v Ready | awk '{print $1}')
-declare -i numberFailedMasters=$(oc get nodes | grep master | grep -v Ready| wc -l)
+numberFailedMasters= $(oc get nodes | grep master | grep -v Ready| wc -l)
 
+case ${numberFailedMasters} in
+    1)
+    {
+        echo "----------------------------------------------------------------------"
+        echo -e "Total Number Of Failed Masters: $numberFailedMasters, \n
+              backup can continue but it is highly recommended to check the platform first"
+        echo "----------------------------------------------------------------------"
+    
+        echo "----------------------------------------"
+        echo -e "Failed Masters are: \n $failedMasters"
+        echo "----------------------------------------"
+        echo
+    };;
+    
+    2)
+    {
+        echo    "--------------------------------------------------------------------------------------"
+        echo    "Majority of Master nodes are down, backup can't start"
+        echo -e "Failed Masters are: \n $failedMasters , Please contact support via access.redhat.com"
+        echo    "--------------------------------------------------------------------------------------"
+    
+        echo    "script is exiting now ..."
+        exit 0
+    };;
 
-# If the number of failed masters is greater than '1` then exit the script right away 
-if [ $numberFailedMasters -gt 1 ]
-then 
-	echo    "--------------------------------------------------------------------------------------"
-	echo    "Majority of Master nodes are down, backup can't start"
-	echo -e "Failed Masters are: \n $failedMasters , Please contact support via access.redhat.com"
-	echo    "--------------------------------------------------------------------------------------"
-	
-	echo    "script is exiting now ..."
-	exit 0
-fi
-
-# If all master nodes are healthy, then pick any of the master nodes to be used for backup
-# the first hit is selected.
-
-if [ $numberFailedMasters -eq 0 ]
-then
-	echo  '====> All Master Nodes are healthy backup can start now'
-else
-	echo "----------------------------------------------------------------------"  
-	echo -e "Total Number Of Failed Masters: $numberFailedMasters, \n
-			backup can continue but it is highly recommended to check the platform first"
-	echo "----------------------------------------------------------------------"
-	
-	echo "----------------------------------------"
-	echo -e "Failed Masters are: \n $failedMasters"
-	echo "----------------------------------------"
-	echo
-fi
-
-
+    *)
+    {
+        echo  '====> All Master Nodes are healthy backup can start now'
+    };;
+esac
+    
+    
 echo -e "====> selected master for etcd backup $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1)"
 echo
 
 echo -e "** check no debug Pod's running on $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1) **"
 oldDebugPod=$(oc get pods | grep debug | awk {'print $1'})
 if [[ -n $OldSessions ]]
-	then
-		eval oc delete pod $oldDebugPod
-else 
-	echo '====>  No debug pods were found'
+    then
+        eval oc delete pod $oldDebugPod
+else
+    echo '====>  No debug pods were found'
 fi
 echo
 
@@ -121,21 +121,21 @@ sleep 10
 
 debugPod=$(oc get pods | grep debug | awk {'print $1'})
 echo -e "====>  debug pod $debugPod successfully started"
-echo 
+echo
 
 echo '** cleaning all Previous backups on selected master node **'
 oc exec  $debugPod -i -t -- rm -rf /host/home/core/assets/backup/
 echo '====>  Previous old backups deleted from selected master node'
-echo 
+echo
 
 echo '** Making sure old backups are removed from the master node **'
 oc exec $debugPod -i -t -- ls -lth  /host/home/core/assets/backup > /dev/null
 if [[ $? -ne 0 ]]
 then
-	echo '====> No old debug pods on node'
+    echo '====> No old debug pods on node'
 else
-	oc exec  $debugPod -i -t -- rm -rf /host/home/core/assets/backup/
-	echo 'Old backup files deleted'
+    oc exec  $debugPod -i -t -- rm -rf /host/home/core/assets/backup/
+    echo 'Old backup files deleted'
 fi
 echo
 
@@ -144,11 +144,11 @@ echo  '** Running etcd backup **'
 oc exec $debugPod -- chroot host /bin/bash /usr/local/bin/cluster-backup.sh /home/core/assets/backup &> /dev/null
 if [[ $? -eq 0 ]]
 then
-	echo '====> etcd backup concluded successfully'
-	echo
+    echo '====> etcd backup concluded successfully'
+    echo
 else
-	echo '====> etcd backup failed, exiting now ...'
-	exit 300
+    echo '====> etcd backup failed, exiting now ...'
+    exit 300
 fi
 
 echo '** Listing backup produced **'
@@ -160,8 +160,8 @@ echo '** Moving the backup from the debugPod to local /tmp directory **'
 oc exec $debugPod -- tar cf - /host/home/core/assets/backup | tar xf - -C /tmp/
 while [[ $? -ne 0 ]]
 do
-	echo '====> tar & copy failed ... retrying ...'
-	oc exec $debugPod -- tar cf - /host/home/core/assets/backup | tar xf - -C /tmp/
+    echo '====> tar & copy failed ... retrying ...'
+    oc exec $debugPod -- tar cf - /host/home/core/assets/backup | tar xf - -C /tmp/
 done
 echo  '====>  Backup saved to /tmp directory'
 echo
@@ -169,20 +169,20 @@ echo
 echo '** cleaning generated backup from master node to avoid exhausting space **'
 oc exec  $debugPod -i -t -- rm -rf /host/home/core/assets/backup/
 echo  '====>  All backups deleted from master node'
-echo 
+echo
 
 echo '** Removing the debug Pod  **'
 eval oc delete pod $debugPod
 echo '====>  Debug Pod Removed'
-echo 
+echo
 
 echo '** tar the local /tmp/host directory **'
 cd /tmp
 rm -rf host*.gz
-tar -cjf host_$(date +%F-%H-%M-%s).tar.gz host
+tar -cjf host_$(date +%F-%H-%M-%S).tar.gz host
 tarball=$(ls -lth | grep host*.gz| awk {'print $9'})
 echo -e " ====> tarball $tarball saved under local /tmp directory"
-echo 
+echo
 
 echo '** Removing /tmp/host directory **'
 rm -rf /tmp/host
