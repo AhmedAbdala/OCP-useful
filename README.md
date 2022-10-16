@@ -1,1 +1,1 @@
-# STC
+# Red Hat
