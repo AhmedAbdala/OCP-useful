@@ -31,23 +31,30 @@ echo "Welcome! to the OCP backup script!"
 echo "---------------------------------------------"
 echo -e "\n \n"
 
+# Checking if you need to login to the cluster or not
 
-# Add an alias to the session to make sure you are logged-in
-# globals
-export kubePass=$(cat ~/ocp-deployment/auth/kubeadmin-password)
-export ocpServer=$(oc whoami --show-server)
-	
+oc whoami &> /dev/null
 
-# Make sure you're logged in to the OCP cluster
-echo '** Trying to login to the cluster as admin! **' 
-eval oc login -u kubeadmin -p ${kubePass} ${ocpServer} > /dev/null
 if [[ $? -eq 0 ]]
-then
-	echo '====> Login to OCP Cluster successful'
-	echo -e "\n \n"
-else
-	echo '====> Could not login to the cluster, exiting now'
-	exit 300
+	then
+		echo 'you are already logged in to the cluster'
+	else
+  	echo “What is the username to login to the cluster? ” 
+  	read username 
+	  echo “please enter your password ” 
+	  read password 
+	  echo 'Trying to login to the cluster'
+	  echo '** Trying to login to the cluster as admin! **' 
+	  eval oc login -u ${username} -p ${password} ${ocpServer} > /dev/null
+	  if [[ $? -eq 0 ]]
+		 then
+	           echo '====> Login to OCP Cluster successful'
+		   echo -e "\n \n"
+		   ocpServer=$(oc whoami --show-server)
+		  else
+		    echo '====> Could not login to the cluster, exiting now'
+		    exit 300	
+	  fi
 fi
 
 # Check the health of the nodes
