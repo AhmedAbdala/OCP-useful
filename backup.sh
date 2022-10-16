@@ -35,26 +35,29 @@ echo -e "\n \n"
 
 # Make sure you're logged in to the OCP cluster
 # If not, ask for username and password
+
 oc whoami &> /dev/null
-if [[$? -eq 0]]
-then
-    echo "You're already logged in to the cluster"
-else
-    echo "enter your username to login to the cluster"
-    read username
-    echo "enter password to login to the cluster"
-    read password
-    echo '** Trying to login to the cluster as admin! **'
-    ocpServer=$(oc whoami --show-server)
-    eval oc login -u ${username} -p ${password} ${ocpServer} > /dev/null
-    if [[ $? -eq 0 ]]
-    then
-        echo '====> Login to OCP Cluster successful'
-        echo -e "\n \n"
-    else
-        echo '====> Could not login to the cluster, exiting now'
-        exit 300
-    fi
+
+if [[ $? -eq 0 ]]
+	then
+		echo 'you are already logged in to the cluster'
+	else
+  	echo “What is the username to login to the cluster? ” 
+  	read username 
+	  echo “please enter your password ” 
+	  read password 
+	  echo 'Trying to login to the cluster'
+	  echo '** Trying to login to the cluster as admin! **' 
+	  eval oc login -u ${username} -p ${password} ${ocpServer} > /dev/null
+	  if [[ $? -eq 0 ]]
+		 then
+	           echo '====> Login to OCP Cluster successful'
+		   echo -e "\n \n"
+		   ocpServer=$(oc whoami --show-server)
+		  else
+		    echo '====> Could not login to the cluster, exiting now'
+		    exit 300	
+	  fi
 fi
 
 # Check the health of the nodes
