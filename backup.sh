@@ -46,7 +46,6 @@ if [[ $? -eq 0 ]]
   	read username 
 	  echo “please enter your password ” 
 	  read password 
-	  echo 'Trying to login to the cluster'
 	  echo '** Trying to login to the cluster as admin! **' 
 	  eval oc login -u ${username} -p ${password} ${ocpServer} > /dev/null
 	  if [[ $? -eq 0 ]]
@@ -63,7 +62,7 @@ fi
 # Check the health of the nodes
 echo '** Checking the health of the master nodes **'
 failedMasters= $(oc get nodes | grep master | grep -v Ready | awk '{print $1}')
-numberFailedMasters= $(oc get nodes | grep master | grep -v Ready| wc -l)
+numberFailedMasters=$(oc get nodes | grep master | grep -v Ready| wc -l)
 
 case ${numberFailedMasters} in
     1)
