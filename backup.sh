@@ -96,14 +96,14 @@ case ${numberFailedMasters} in
 esac
     
     
-echo -e "====> selected master for etcd backup $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1)"
+echo -e "====> selected master for etcd backup $(oc get nodes | grep master | grep -w Ready | awk '{print $1}' | head -n1)"
 echo
 
-echo -e "** check no debug Pod's running on $(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1) **"
+echo -e "** check no debug Pod's running on $(oc get nodes | grep master | grep -w Ready | awk '{print $1}' | head -n1) **"
 oldDebugPod=$(oc get pods | grep debug | awk {'print $1'})
-if [[ -n $OldSessions ]]
+if [[ -n $oldDebugPod ]]
     then
-        eval oc delete pod $oldDebugPod
+        eval oc delete pod $oldDebugPod --force
 else
     echo '====>  No debug pods were found'
 fi
