@@ -167,10 +167,10 @@ done
 echo  '====>  Backup saved to /tmp directory'
 echo
 
-echo '** cleaning generated backup from master node to avoid exhausting space **'
-oc exec  $debugPod -i -t -- rm -rf /host/home/core/assets/backup/
-echo  '====>  All backups deleted from master node'
-echo
+#echo '** cleaning generated backup from master node to avoid exhausting space **'
+#oc exec  $debugPod -i -t -- rm -rf /host/home/core/assets/backup/
+#echo  '====>  All backups deleted from master node'
+#echo
 
 echo '** Removing the debug Pod  **'
 eval oc delete pod $debugPod
