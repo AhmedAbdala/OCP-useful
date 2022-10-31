@@ -61,15 +61,15 @@ fi
 
 # Check the health of the nodes
 echo '** Checking the health of the master nodes **'
-failedMasters= $(oc get nodes | grep master | grep -v Ready | awk '{print $1}')
-numberFailedMasters=$(oc get nodes | grep master | grep -v Ready| wc -l)
+failedMasters="$(oc get nodes | grep master | grep -vw Ready | awk '{print $1}')"
+numberFailedMasters=$(oc get nodes | grep master | grep -vw Ready| wc -l)
 
 case ${numberFailedMasters} in
     1)
     {
         echo "----------------------------------------------------------------------"
-        echo -e "Total Number Of Failed Masters: $numberFailedMasters, \n
-              backup can continue but it is highly recommended to check the platform first"
+        echo -e "Total Number Of Failed Masters: $numberFailedMasters, backup can continue 
+        but it is highly recommended to check the platform first"
         echo "----------------------------------------------------------------------"
     
         echo "----------------------------------------"
@@ -112,7 +112,7 @@ echo
 echo '** Starting a new debug pod **'
 # Start a clean new debug pod and keep it running in the background
  
-echo <<< $(oc debug node/$(oc get nodes | grep master | grep Ready | awk '{print $1}' | head -n1) &>/dev/null) &
+echo <<< $(oc debug node/$(oc get nodes | grep master | grep -w Ready | awk '{print $1}' | head -n1) &>/dev/null) &
 
 # back-off to make sure the debug pod is running
 echo '====>  Getting a 10 seconds nap to make sure the debug pod is started'
@@ -144,14 +144,13 @@ echo
 # start the backup process
 echo  '** Running etcd backup **'
 oc exec $debugPod -- chroot host /bin/bash /usr/local/bin/cluster-backup.sh /home/core/assets/backup &> /dev/null
-if [[ $? -eq 0 ]]
-then
-    echo '====> etcd backup concluded successfully'
-    echo
-else
-    echo '====> etcd backup failed, exiting now ...'
-    exit 300
-fi
+while [[ $? -ne 0 ]]
+do
+    echo '====> etcd backup failed ... retrying ...'
+    oc exec $debugPod -- chroot host /bin/bash /usr/local/bin/cluster-backup.sh /home/core/assets/backup &> /dev/null
+done
+echo '====> etcd backup concluded successfully'
+
 
 echo '** Listing backup produced **'
 oc exec $debugPod -i -t -- ls -lth  /host/home/core/assets/backup | awk {'print $9'}
