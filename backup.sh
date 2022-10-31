@@ -144,11 +144,11 @@ echo
 # start the backup process
 echo  '** Running etcd backup **'
 oc exec $debugPod -- chroot host /bin/bash /usr/local/bin/cluster-backup.sh /home/core/assets/backup &> /dev/null
-while [[ $? -ne 0 ]]
-do
-    echo '====> etcd backup failed ... retrying ...'
-    oc exec $debugPod -- chroot host /bin/bash /usr/local/bin/cluster-backup.sh /home/core/assets/backup &> /dev/null
-done
+#while [[ $? -ne 0 ]]
+#do
+#    echo '====> etcd backup failed ... retrying ...'
+#    oc exec $debugPod -- chroot host /bin/bash /usr/local/bin/cluster-backup.sh /home/core/assets/backup &> /dev/null
+#done
 echo '====> etcd backup concluded successfully'
 
 
