@@ -211,7 +211,7 @@ echo
 echo '** tar the local /tmp/host directory **'
 cd /tmp
 rm -rf host*.gz
-if [[ connected == true ]]
+if [[ $connected == true ]]
 then 
     tar -cjvf host_$(date +%F-%H-%M-%S).tar.gz host
     tarball=$(ls -lth | grep host*.gz| awk {'print $9'})
@@ -219,7 +219,7 @@ then
     echo
 fi
 
-if [[ disconnected == true ]]
+if [[ $disconnected == true ]]
 then
     tar -cvf host_$(date +%F-%H-%M-%S).tar host
     tarball=$(ls -lth | grep host*.tar| awk {'print $9'})
