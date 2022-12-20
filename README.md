@@ -1,6 +1,7 @@
 # Red Hat
 
 The backup.sh script will launch backup for etcd on master nodes based on the official method supported by Red Hat:
+
 https://docs.openshift.com/container-platform/4.10/backup_and_restore/control_plane_backup_and_restore/backing-up-etcd.html
 
 The script is designed to work with OCP4.10
@@ -17,8 +18,11 @@ The script logs in to the OCP cluster as kubeadmin, it assumes the kubeadmin-pas
 to make sure of the correct execution.
 
 Property of Red Hat, all rights reserved.
+
 https://github.com/AhmedAbdala/OCP-useful/blob/main/backup.sh
+
 To directly download script: curl https://raw.githubusercontent.com/AhmedAbdala/OCP-useful/main/backup.sh
 
 Maintainer: <azaky@redhat.com> 
+
             <amzaky@linux.com>
