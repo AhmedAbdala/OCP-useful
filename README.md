@@ -1,10 +1,10 @@
-# Red Hat
+# Red Hat OCP backup shell script
 
 The backup.sh script will launch backup for etcd on master nodes based on the official method supported by Red Hat:
 
 https://docs.openshift.com/container-platform/4.10/backup_and_restore/control_plane_backup_and_restore/backing-up-etcd.html
 
-The script is designed & tested with OCP4.10, the script had been tested & verified to work with OCP running on top of AWS, GCP, IBM, Baremetal environments. In case of errors or suggestions please drop an email to the maintainer.
+The script is designed & tested with OCP4.10, the script had been tested & verified to work with OCP running on top of AWS, GCP, IBM Clouds and Baremetal environments. In case of errors or suggestions please drop an email to the maintainer.
 
 The script will backup etcd by first checking the health of master nodes, if the number of healthy master nodes is 3 then the script will pick the first healthy match to use for etcd backup. if two master nodes are healthy then the script will still proceed asking for confirmation while printing out a message to check the cluster and make sure to bring it to a nominal state.
 
