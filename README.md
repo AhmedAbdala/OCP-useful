@@ -28,4 +28,3 @@ https://github.com/AhmedAbdala/OCP-useful/blob/main/backup.sh
 To directly download script: curl https://raw.githubusercontent.com/AhmedAbdala/OCP-useful/main/backup.sh
 
 Maintainer: <azaky@redhat.com> 
-            , <amzaky@linux.com>
